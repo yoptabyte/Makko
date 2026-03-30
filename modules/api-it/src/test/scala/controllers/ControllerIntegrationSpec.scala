@@ -176,7 +176,7 @@ class ControllerIntegrationSpec extends PlaySpec with Results with CancelAfterFa
     val mysql = MySQLContainer(
       databaseName = "markko",
       username = "markko",
-      password = "markko_secret"
+      password = "test-mysql-password"
     )
     mysql.start()
     try f(mysql)

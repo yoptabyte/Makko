@@ -247,6 +247,7 @@ lazy val worker = (project in file("modules/worker"))
       // Prometheus
       "io.prometheus" % "simpleclient"         % prometheusVersion,
       "io.prometheus" % "simpleclient_hotspot" % prometheusVersion,
+      "io.prometheus" % "simpleclient_httpserver" % prometheusVersion,
 
       // Tests
       "org.apache.pekko"  %% "pekko-actor-testkit-typed" % pekkoVersion % Test,

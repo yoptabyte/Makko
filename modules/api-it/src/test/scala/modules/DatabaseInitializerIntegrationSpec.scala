@@ -64,7 +64,7 @@ class DatabaseInitializerIntegrationSpec extends PlaySpec with CancelAfterFailur
     val mysql = MySQLContainer(
       databaseName = "markko",
       username = "markko",
-      password = "markko_secret"
+      password = "test-mysql-password"
     )
     mysql.start()
     try f(mysql)

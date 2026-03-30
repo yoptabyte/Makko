@@ -4,6 +4,7 @@ import org.apache.pekko.actor.typed.{ActorSystem, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import io.prometheus.client.exporter.HTTPServer
 import io.markko.worker.actors.{ClusterSupervisor, ParserSupervisor, ResyncActor}
 
 import scala.concurrent.Await
@@ -25,6 +26,10 @@ object WorkerApp extends App with LazyLogging {
   val clusterMode = sys.env.getOrElse("MARKKO_CLUSTER_MODE", "false").toBoolean
 
   logger.info(s"Starting Markko Worker (cluster=$clusterMode)...")
+
+  val metricsPort = sys.env.get("MARKKO_WORKER_METRICS_PORT").flatMap(_.toIntOption).getOrElse(9095)
+  val metricsServer = new HTTPServer(metricsPort)
+  logger.info(s"Worker metrics exposed on http://0.0.0.0:$metricsPort/metrics")
 
   val system: ActorSystem[Nothing] = if (clusterMode) {
     // Cluster mode: ClusterSingleton for ParserSupervisor, local ResyncActor
@@ -55,6 +60,7 @@ object WorkerApp extends App with LazyLogging {
   // Graceful shutdown
   sys.addShutdownHook {
     logger.info("Shutting down Markko Worker...")
+    metricsServer.stop()
     system.terminate()
   }
 
