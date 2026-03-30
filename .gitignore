@@ -1,0 +1,33 @@
+# Scala / sbt
+target/
+project/target/
+project/project/
+.bsp/
+.bloop/
+.metals/
+.idea/
+.vscode/
+*.class
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+
+# Vault (local testing)
+vault/
+out/
+
+# Docker volumes
+mysql_data/
+redis_data/
+es_data/
+
+# Frontend
+ui/node_modules/
+ui/dist/
+extension/node_modules/
+extension/dist/

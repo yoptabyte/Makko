@@ -1,0 +1,19 @@
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger -- %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="io.lettuce" level="WARN" />
+  <logger name="io.netty" level="WARN" />
+  <logger name="reactor.util" level="WARN" />
+  <logger name="reactor.netty" level="WARN" />
+  <logger name="org.apache.http" level="WARN" />
+  <logger name="org.elasticsearch.client" level="WARN" />
+  <logger name="com.sksamuel.elastic4s.http.JavaClient" level="WARN" />
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

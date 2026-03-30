@@ -1,0 +1,20 @@
+CREATE TABLE links (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  url TEXT NOT NULL,
+  url_hash CHAR(32) NOT NULL,
+  title VARCHAR(500) NULL,
+  content_md MEDIUMTEXT NULL,
+  reading_time_min INT NULL,
+  status ENUM('pending','parsing','parsed','failed') NOT NULL DEFAULT 'pending',
+  collection_id BIGINT NULL,
+  user_id BIGINT NOT NULL,
+  saved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parsed_at TIMESTAMP NULL,
+  indexed_at TIMESTAMP NULL,
+  UNIQUE INDEX idx_url_hash_user (url_hash, user_id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_status (status),
+  INDEX idx_collection (collection_id),
+  INDEX idx_indexed_at (indexed_at),
+  CONSTRAINT fk_links_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

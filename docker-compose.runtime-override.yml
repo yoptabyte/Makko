@@ -1,0 +1,8 @@
+services:
+  redis:
+    ports:
+      - "6380:6379"
+
+  elasticsearch:
+    ports:
+      - "9201:9200"

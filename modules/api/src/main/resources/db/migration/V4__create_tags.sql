@@ -1,0 +1,13 @@
+CREATE TABLE tags (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  UNIQUE INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE link_tags (
+  link_id BIGINT NOT NULL,
+  tag_id BIGINT NOT NULL,
+  PRIMARY KEY (link_id, tag_id),
+  CONSTRAINT fk_lt_link FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE,
+  CONSTRAINT fk_lt_tag FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

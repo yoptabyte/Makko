@@ -1,0 +1,171 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "title": "Parse Queue Depth",
+            "description": "Redis LLEN queue:parse — current backlog",
+            "type": "stat",
+            "gridPos": {
+                "h": 6,
+                "w": 5,
+                "x": 0,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "markko_parse_queue_depth",
+                    "legendFormat": "Queue Depth",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 10
+                            },
+                            {
+                                "color": "red",
+                                "value": 50
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Links per Hour",
+            "description": "Throughput of link additions",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 6,
+                "w": 7,
+                "x": 5,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "rate(markko_links_created_total[1h]) * 3600",
+                    "legendFormat": "Links/hour",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Export Success Rate",
+            "description": "% of successful Obsidian exports",
+            "type": "gauge",
+            "gridPos": {
+                "h": 6,
+                "w": 5,
+                "x": 12,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "markko_exports_success_total / (markko_exports_success_total + markko_exports_failed_total) * 100",
+                    "legendFormat": "Success %",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "max": 100,
+                    "unit": "percent",
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 80
+                            },
+                            {
+                                "color": "green",
+                                "value": 95
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "ES Index Lag",
+            "description": "MySQL count vs ES count — shows replication lag",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 6,
+                "w": 7,
+                "x": 17,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "markko_links_total - markko_es_indexed_total",
+                    "legendFormat": "Unindexed links",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Worker Errors",
+            "description": "Circuit breaker trips and retry count",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 6
+            },
+            "targets": [
+                {
+                    "expr": "rate(markko_parse_failures_total[5m])",
+                    "legendFormat": "Parse failures/sec",
+                    "refId": "A"
+                },
+                {
+                    "expr": "rate(markko_circuit_breaker_trips_total[5m])",
+                    "legendFormat": "CB trips/sec",
+                    "refId": "B"
+                },
+                {
+                    "expr": "rate(markko_retries_total[5m])",
+                    "legendFormat": "Retries/sec",
+                    "refId": "C"
+                }
+            ]
+        }
+    ],
+    "schemaVersion": 39,
+    "tags": [
+        "markko",
+        "bookmarks"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "title": "Markko — Bookmarking Service",
+    "uid": "markko-overview",
+    "version": 1
+}

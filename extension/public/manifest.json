@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Markko Save Button",
+  "description": "Save the current page into Markko from Chrome or Firefox.",
+  "version": "0.1.0",
+  "permissions": ["storage", "tabs", "activeTab"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_title": "Save to Markko",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "markko@example.org",
+      "strict_min_version": "121.0"
+    }
+  }
+}

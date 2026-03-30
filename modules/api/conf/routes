@@ -1,0 +1,42 @@
+# Markko API routes
+
+# Health
+GET     /health                     controllers.HealthController.health()
+GET     /metrics                    controllers.MetricsController.metrics()
+
+# Authentication
+POST    /auth/register              controllers.AuthController.register()
+POST    /auth/login                 controllers.AuthController.login()
+POST    /auth/refresh               controllers.AuthController.refresh()
+GET     /auth/me                    controllers.AuthController.me()
+POST    /auth/logout                controllers.AuthController.logout()
+
+# Links
+GET     /links                      controllers.LinkController.list(limit: Option[Int], offset: Option[Int])
+POST    /links                      controllers.LinkController.create()
+GET     /links/search               controllers.SearchController.search(q: String)
+GET     /links/search/advanced      controllers.SearchController.searchAdvanced(q: Option[String], tag: Option[String], collection: Option[String], limit: Option[Int], offset: Option[Int])
+GET     /links/search/tag/:tag      controllers.SearchController.searchByTag(tag: String)
+GET     /links/suggest              controllers.SearchController.suggest(q: String)
+GET     /links/:id                  controllers.LinkController.get(id: Long)
+PUT     /links/:id                  controllers.LinkController.update(id: Long)
+DELETE  /links/:id                  controllers.LinkController.delete(id: Long)
+
+# Collections
+GET     /collections                controllers.CollectionController.list()
+POST    /collections                controllers.CollectionController.create()
+PUT     /collections/:id            controllers.CollectionController.update(id: Long)
+DELETE  /collections/:id            controllers.CollectionController.delete(id: Long)
+
+# Export
+GET     /export/:id                 controllers.ExportController.download(id: Long)
+GET     /export/:id/status          controllers.ExportController.status(id: Long)
+POST    /export/:id/reexport        controllers.ExportController.reexport(id: Long)
+DELETE  /export/:id                 controllers.ExportController.deleteExport(id: Long)
+
+# Vault
+GET     /vault/directories          controllers.VaultController.directories()
+POST    /vault/pick-directory       controllers.VaultController.pickDirectory()
+
+# WebSocket
+GET     /ws/feed                    controllers.WebSocketController.feed()
