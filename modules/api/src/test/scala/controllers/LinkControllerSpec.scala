@@ -16,7 +16,7 @@ import play.silhouette.impl.authenticators.JWTAuthenticator
 import repositories.LinkRepository
 import services.{ElasticsearchService, RedisService}
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class LinkControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
@@ -39,8 +39,8 @@ class LinkControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
     email = "test@example.com",
     name = "Test User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   val otherUser: AuthUser = AuthUser(User(
@@ -48,8 +48,8 @@ class LinkControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
     email = "other@example.com",
     name = "Other User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   // ---------- Stub AuthAction that always returns testUser ----------

@@ -1,6 +1,7 @@
 package io.markko.shared.redis
 
 import com.typesafe.config.Config
+import io.markko.shared.config.ConfigOps
 
 object RedisKeys {
   val ParseQueue          = "queue:parse"
@@ -14,9 +15,9 @@ object RedisKeys {
 
 object RedisConfigSupport {
   def connectionUri(config: Config): String = {
-    val password = optionalString(config, "markko.redis.password")
-    val baseUri = optionalString(config, "markko.redis.uri").getOrElse {
-      val host = optionalString(config, "markko.redis.host").getOrElse("localhost")
+    val password = ConfigOps.optionalString(config, "markko.redis.password")
+    val baseUri = ConfigOps.optionalString(config, "markko.redis.uri").getOrElse {
+      val host = ConfigOps.optionalString(config, "markko.redis.host").getOrElse("localhost")
       val port = if (config.hasPath("markko.redis.port")) config.getInt("markko.redis.port") else 6379
 
       password match {
@@ -27,10 +28,6 @@ object RedisConfigSupport {
 
     injectPassword(baseUri, password)
   }
-
-  private def optionalString(config: Config, path: String): Option[String] =
-    if (config.hasPath(path)) Option(config.getString(path)).map(_.trim).filter(_.nonEmpty)
-    else None
 
   private def injectPassword(uri: String, password: Option[String]): String =
     password match {

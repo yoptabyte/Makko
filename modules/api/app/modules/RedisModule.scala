@@ -10,7 +10,6 @@ import dev.profunktor.redis4cats.effect.Log.Stdout._
 import io.markko.shared.redis.RedisConfigSupport
 import play.api.Configuration
 
-/** Guice module: wires up Redis commands */
 class RedisModule extends AbstractModule {
 
   override def configure(): Unit = ()

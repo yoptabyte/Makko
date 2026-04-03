@@ -1,6 +1,6 @@
 package repositories
 
-import java.time.LocalDateTime
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import cats.effect.IO
 import doobie._
@@ -17,11 +17,11 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
       email = email,
       name = name,
       password = password,
-      createdAt = Option(LocalDateTime.parse(createdAt)),
-      updatedAt = Option(LocalDateTime.parse(updatedAt))
+      createdAt = Some(Instant.parse(createdAt)),
+      updatedAt = Some(Instant.parse(updatedAt))
     )
   }
-  
+
   def create(user: User): IO[Long] = {
     sql"""
       INSERT INTO users (email, name, password_hash, created_at, updated_at)
@@ -29,7 +29,7 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
     """.update.withUniqueGeneratedKeys[Long]("id")
       .transact(xa)
   }
-  
+
   def findById(id: Long): IO[Option[User]] = {
     sql"""
       SELECT
@@ -44,7 +44,7 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
     """.query[(Long, String, String, Option[String], String, String)].option.map(_.map(toUser))
       .transact(xa)
   }
-  
+
   def findByEmail(email: String): IO[Option[User]] = {
     sql"""
       SELECT
@@ -59,7 +59,7 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
     """.query[(Long, String, String, Option[String], String, String)].option.map(_.map(toUser))
       .transact(xa)
   }
-  
+
   def update(id: Long, user: User): IO[Int] = {
     sql"""
       UPDATE users
@@ -77,7 +77,7 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
     """.update.run
       .transact(xa)
   }
-  
+
   def delete(id: Long): IO[Int] = {
     sql"""
       DELETE FROM users
@@ -85,7 +85,7 @@ class UserRepository @Inject()(xa: Transactor[IO]) {
     """.update.run
       .transact(xa)
   }
-  
+
   def existsByEmail(email: String): IO[Boolean] = {
     sql"""
       SELECT COUNT(*) > 0

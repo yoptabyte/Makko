@@ -9,7 +9,7 @@ import org.jsoup.Jsoup
 
 import java.net.{URL, HttpURLConnection}
 import java.nio.file.{Path, Paths, Files}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.util.Try

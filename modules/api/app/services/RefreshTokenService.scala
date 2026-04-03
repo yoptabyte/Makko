@@ -12,7 +12,7 @@ import play.silhouette.api.LoginInfo
 
 import java.nio.charset.StandardCharsets
 import java.security.{MessageDigest, SecureRandom}
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.Base64
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -31,7 +31,7 @@ class RefreshTokenService @Inject()(
   ).asInstanceOf[FiniteDuration]
 
   def issue(loginInfo: LoginInfo, request: RequestHeader): Future[IssuedRefreshToken] =
-    issue(loginInfo, buildMetadata(generateSessionId(), request, LocalDateTime.now(), None))
+    issue(loginInfo, buildMetadata(generateSessionId(), request, Instant.now(), None))
 
   def rotate(token: String, request: RequestHeader): Future[RotateResult] = {
     val tokenHash = sha256(token)
@@ -41,7 +41,7 @@ class RefreshTokenService @Inject()(
         val refreshedMetadata = record.metadata.copy(
           ipAddress = clientIp(request),
           userAgent = request.headers.get("User-Agent"),
-          lastRefreshedAt = Some(LocalDateTime.now())
+          lastRefreshedAt = Some(Instant.now())
         )
 
         issue(record.loginInfo, refreshedMetadata).flatMap { issued =>
@@ -106,8 +106,8 @@ class RefreshTokenService @Inject()(
   private def buildMetadata(
     sessionId: String,
     request: RequestHeader,
-    createdAt: LocalDateTime,
-    lastRefreshedAt: Option[LocalDateTime]
+    createdAt: Instant,
+    lastRefreshedAt: Option[Instant]
   ): RefreshSessionMetadata =
     RefreshSessionMetadata(
       sessionId = sessionId,

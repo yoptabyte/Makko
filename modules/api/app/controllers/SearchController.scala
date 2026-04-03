@@ -1,12 +1,12 @@
 package controllers
 
-import actions.AuthAction
+import actions.{AuthAction, AuthRequest}
 import javax.inject._
 import play.api.mvc._
 import play.api.libs.json._
 import services.ElasticsearchService
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SearchController @Inject()(
@@ -15,21 +15,23 @@ class SearchController @Inject()(
   authAction: AuthAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
-  /** GET /links/search?q=scala — Full-text search via Elasticsearch */
   def search(q: String): Action[AnyContent] = authAction.async { request =>
-    val userId = request.identity.id.get
-    esService.search(q, userId).map { results =>
-      Ok(Json.toJson(results))
-    }.recover {
-      case ex: Exception =>
-        ServiceUnavailable(Json.obj(
-          "error"   -> "Search temporarily unavailable",
-          "details" -> ex.getMessage
-        ))
+    request.identity.id match {
+      case Some(userId) =>
+        esService.search(q, userId).map { results =>
+          Ok(Json.toJson(results))
+        }.recover {
+          case ex: Exception =>
+            ServiceUnavailable(Json.obj(
+              "error"   -> "Search temporarily unavailable",
+              "details" -> ex.getMessage
+            ))
+        }
+      case None =>
+        Future.successful(InternalServerError(Json.obj("error" -> "User ID not available")))
     }
   }
 
-  /** GET /links/search/advanced?q=&tag=&collection=&limit=&offset= */
   def searchAdvanced(
     q:          Option[String],
     tag:        Option[String],
@@ -37,40 +39,50 @@ class SearchController @Inject()(
     limit:      Option[Int],
     offset:     Option[Int]
   ): Action[AnyContent] = authAction.async { request =>
-    val userId = request.identity.id.get
-    val tags = tag.toList
-    esService.searchAdvanced(q, tags, collection, userId, limit.getOrElse(20), offset.getOrElse(0)).map { result =>
-      Ok(Json.obj(
-        "total"  -> result.total,
-        "offset" -> result.offset,
-        "limit"  -> result.limit,
-        "hits"   -> result.hits
-      ))
-    }.recover {
-      case ex: Exception =>
-        ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+    request.identity.id match {
+      case Some(userId) =>
+        val tags = tag.toList
+        esService.searchAdvanced(q, tags, collection, userId, limit.getOrElse(20), offset.getOrElse(0)).map { result =>
+          Ok(Json.obj(
+            "total"  -> result.total,
+            "offset" -> result.offset,
+            "limit"  -> result.limit,
+            "hits"   -> result.hits
+          ))
+        }.recover {
+          case ex: Exception =>
+            ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+        }
+      case None =>
+        Future.successful(InternalServerError(Json.obj("error" -> "User ID not available")))
     }
   }
 
-  /** GET /links/search/tag/:tag — Search by tag */
   def searchByTag(tag: String): Action[AnyContent] = authAction.async { request =>
-    val userId = request.identity.id.get
-    esService.searchByTag(tag, userId).map { results =>
-      Ok(Json.toJson(results))
-    }.recover {
-      case ex: Exception =>
-        ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+    request.identity.id match {
+      case Some(userId) =>
+        esService.searchByTag(tag, userId).map { results =>
+          Ok(Json.toJson(results))
+        }.recover {
+          case ex: Exception =>
+            ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+        }
+      case None =>
+        Future.successful(InternalServerError(Json.obj("error" -> "User ID not available")))
     }
   }
 
-  /** GET /links/suggest?q=pek — Autocomplete suggestions */
   def suggest(q: String): Action[AnyContent] = authAction.async { request =>
-    val userId = request.identity.id.get
-    esService.suggest(q, userId).map { results =>
-      Ok(Json.toJson(results))
-    }.recover {
-      case ex: Exception =>
-        ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+    request.identity.id match {
+      case Some(userId) =>
+        esService.suggest(q, userId).map { results =>
+          Ok(Json.toJson(results))
+        }.recover {
+          case ex: Exception =>
+            ServiceUnavailable(Json.obj("error" -> ex.getMessage))
+        }
+      case None =>
+        Future.successful(InternalServerError(Json.obj("error" -> "User ID not available")))
     }
   }
 }

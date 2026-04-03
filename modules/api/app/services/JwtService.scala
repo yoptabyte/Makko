@@ -36,7 +36,10 @@ class JwtService @Inject()(
     jwt.encode(value, settings.sharedSecret, algorithm)
 
   override def decode(value: String): String =
-    jwt.decodeRaw(value, settings.sharedSecret, algorithms).get
+    jwt.decodeRaw(value, settings.sharedSecret, algorithms).toEither.fold(
+      ex => throw new IllegalArgumentException(s"Failed to decode JWT: ${ex.getMessage}", ex),
+      identity
+    )
 
   def unserialize(token: String): Try[JWTAuthenticator] = {
     implicit val silhouetteClock: Option[Clock] = Some(clock)

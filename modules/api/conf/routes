@@ -36,7 +36,6 @@ DELETE  /export/:id                 controllers.ExportController.deleteExport(id
 
 # Vault
 GET     /vault/directories          controllers.VaultController.directories()
-POST    /vault/pick-directory       controllers.VaultController.pickDirectory()
 
 # WebSocket
 GET     /ws/feed                    controllers.WebSocketController.feed()

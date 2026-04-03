@@ -14,17 +14,15 @@ import java.nio.file.Paths
 
 import scala.concurrent.ExecutionContext
 
-/** Guice module: wires up Doobie transactor, runs Flyway migrations, initializes ES index */
 class DatabaseModule extends AbstractModule with LazyLogging {
 
   override def configure(): Unit = {
-    // Eager binding ensures migration runs on startup
     bind(classOf[DatabaseInitializer]).asEagerSingleton()
   }
 
   @Provides
   @Singleton
-  def transactor(config: Configuration): Transactor[IO] = {
+  def transactorResource(config: Configuration): Resource[IO, Transactor[IO]] = {
     val dbUrl      = config.get[String]("markko.database.url")
     val dbUser     = config.get[String]("markko.database.user")
     val dbPassword = config.get[String]("markko.database.password")
@@ -36,7 +34,13 @@ class DatabaseModule extends AbstractModule with LazyLogging {
       user            = dbUser,
       pass            = dbPassword,
       connectEC       = ExecutionContext.global
-    ).allocated.unsafeRunSync()._1
+    )
+  }
+
+  @Provides
+  @Singleton
+  def transactor(config: Configuration, resource: Resource[IO, Transactor[IO]]): Transactor[IO] = {
+    resource.allocated.unsafeRunSync()._1
   }
 }
 
@@ -46,7 +50,6 @@ class DatabaseInitializer @Inject()(
   esService: ElasticsearchService
 ) extends LazyLogging {
 
-  // Run Flyway migrations
   private val dbUrl      = config.get[String]("markko.database.url")
   private val dbUser     = config.get[String]("markko.database.user")
   private val dbPassword = config.get[String]("markko.database.password")
@@ -69,7 +72,6 @@ class DatabaseInitializer @Inject()(
     .migrate()
   logger.info("Flyway migrations complete.")
 
-  // Ensure ES index exists
   logger.info("Ensuring Elasticsearch index exists...")
   esService.ensureIndex()
   logger.info("Elasticsearch index ready.")

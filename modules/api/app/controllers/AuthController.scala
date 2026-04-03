@@ -46,9 +46,12 @@ class AuthController @Inject()(
 
             userRepository.create(user).unsafeToFuture().map { userId =>
               val createdUser = user.copy(id = Some(userId))
+              val userResponse = UserResponse.from(createdUser).getOrElse(
+                throw new IllegalStateException("Created user has no ID")
+              )
               Created(Json.obj(
                 "message" -> "User created successfully",
-                "user" -> Json.toJson(UserResponse.from(createdUser))
+                "user" -> Json.toJson(userResponse)
               ))
             }
           }
@@ -103,7 +106,10 @@ class AuthController @Inject()(
   }
 
   def me = authAction.async { implicit request =>
-    Future.successful(Ok(Json.obj("user" -> Json.toJson(UserResponse.from(request.identity.user)))))
+    UserResponse.from(request.identity.user) match {
+      case Some(userResp) => Future.successful(Ok(Json.obj("user" -> Json.toJson(userResp))))
+      case None => Future.successful(InternalServerError(Json.obj("error" -> "User ID not available")))
+    }
   }
 
   def logout = authAction.async(parse.tolerantJson) { implicit request =>
@@ -152,11 +158,12 @@ class AuthController @Inject()(
     user: User
   ): AuthTokenResponse =
     AuthTokenResponse(
-      token = accessToken,
       accessToken = accessToken,
       refreshToken = refreshToken,
       tokenType = "Bearer",
-      user = UserResponse.from(user),
+      user = UserResponse.from(user).getOrElse(
+        throw new IllegalStateException("Authenticated user has no ID")
+      ),
       session = metadata
     )
 }

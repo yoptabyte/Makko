@@ -29,8 +29,8 @@ class CollectionControllerSpec extends PlaySpec with Results with BeforeAndAfter
     email = "test@example.com",
     name = "Test User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   val otherUser: AuthUser = AuthUser(User(
@@ -38,8 +38,8 @@ class CollectionControllerSpec extends PlaySpec with Results with BeforeAndAfter
     email = "other@example.com",
     name = "Other User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   class FakeAuthAction(user: AuthUser) extends AuthAction(null, null, null, null, null)(ec) {

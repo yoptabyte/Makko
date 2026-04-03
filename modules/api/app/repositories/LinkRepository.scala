@@ -9,6 +9,9 @@ import doobie._
 import doobie.implicits._
 import doobie.implicits.javasql._
 import doobie.util.meta.Meta
+import doobie.util.fragments
+import doobie.util.fragments._
+import cats.data.NonEmptyList
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -121,40 +124,43 @@ class LinkRepository @Inject()(
 
   /** Find all links for a user with pagination */
   def findAllByUser(userId: Long, limit: Int = 20, offset: Int = 0): Future[List[JsObject]] = {
-    val query = for {
-      links <- sql"""SELECT id, url, url_hash, title, reading_time_min,
-                            status, collection_id, export_directory, export_file_name,
-                            saved_at, parsed_at
-                     FROM links WHERE user_id = $userId
-                     ORDER BY saved_at DESC
-                     LIMIT $limit OFFSET $offset"""
-        .query[(Long, String, String, Option[String], Option[Int],
-                String, Option[Long], Option[String], Option[String], Instant, Option[Instant])]
-        .to[List]
+    val linksSql = sql"""SELECT id, url, url_hash, title, reading_time_min,
+                                status, collection_id, export_directory, export_file_name,
+                                saved_at, parsed_at
+                         FROM links WHERE user_id = $userId
+                         ORDER BY saved_at DESC
+                         LIMIT $limit OFFSET $offset"""
 
+    val linksQuery = linksSql
+      .query[(Long, String, String, Option[String], Option[Int],
+              String, Option[Long], Option[String], Option[String], Instant, Option[Instant])]
+      .to[List]
+
+    val query = for {
+      links <- linksQuery
       results <- links.traverse {
         case (lid, url, hash, title, readTime, status, cid, exportDirectory, exportFileName, saved, parsed) =>
-        sql"""SELECT t.name FROM tags t
-              JOIN link_tags lt ON lt.tag_id = t.id
-              WHERE lt.link_id = $lid"""
-          .query[String]
-          .to[List]
-          .map { tags =>
-            Json.obj(
-              "id"             -> lid,
-              "url"            -> url,
-              "urlHash"        -> hash,
-              "title"          -> title,
-              "readingTimeMin" -> readTime,
-              "status"         -> status,
-              "collectionId"   -> cid,
-              "exportDirectory" -> exportDirectory,
-              "exportFileName"  -> exportFileName,
-              "savedAt"        -> saved.toString,
-              "parsedAt"       -> parsed.map(_.toString),
-              "tags"           -> tags
-            )
-          }
+          sql"""SELECT t.name FROM tags t
+                JOIN link_tags lt ON lt.tag_id = t.id
+                WHERE lt.link_id = $lid"""
+            .query[String]
+            .to[List]
+            .map { tags =>
+              Json.obj(
+                "id"             -> lid,
+                "url"            -> url,
+                "urlHash"        -> hash,
+                "title"          -> title,
+                "readingTimeMin" -> readTime,
+                "status"         -> status,
+                "collectionId"   -> cid,
+                "exportDirectory" -> exportDirectory,
+                "exportFileName"  -> exportFileName,
+                "savedAt"        -> saved.toString,
+                "parsedAt"       -> parsed.map(_.toString),
+                "tags"           -> tags
+              )
+            }
       }
     } yield results
 

@@ -1,6 +1,6 @@
 package io.markko.worker.actors
 
-import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.{Behavior, SupervisorStrategy}
 import org.apache.pekko.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
@@ -32,35 +32,37 @@ object ResyncActor extends LazyLogging {
   private case object MetricsTimerKey
 
   def apply(config: Config): Behavior[Command] = {
-    Behaviors.setup { context =>
-      Behaviors.withTimers { timers =>
-        val dbUrl      = config.getString("markko.database.url")
-        val dbUser     = config.getString("markko.database.user")
-        val dbPassword = config.getString("markko.database.password")
-        val vaultPath  = config.getString("markko.vault.base-path")
+    Behaviors.supervise[Command](
+      Behaviors.setup[Command] { context =>
+        Behaviors.withTimers { timers =>
+          val dbUrl      = config.getString("markko.database.url")
+          val dbUser     = config.getString("markko.database.user")
+          val dbPassword = config.getString("markko.database.password")
+          val vaultPath  = config.getString("markko.vault.base-path")
 
-        val xa = HikariTransactor.newHikariTransactor[IO](
-          driverClassName = "com.mysql.cj.jdbc.Driver",
-          url             = dbUrl,
-          user            = dbUser,
-          pass            = dbPassword,
-          connectEC       = ExecutionContext.global
-        ).allocated.unsafeRunSync()._1
+          val xa = HikariTransactor.newHikariTransactor[IO](
+            driverClassName = "com.mysql.cj.jdbc.Driver",
+            url             = dbUrl,
+            user            = dbUser,
+            pass            = dbPassword,
+            connectEC       = ExecutionContext.global
+          ).allocated.unsafeRunSync()._1
 
-        val esResync        = new ElasticsearchResync(config, xa)
-        val wikilinkBuilder = new WikilinkBuilder(xa)
-        val obsidianSync    = new ObsidianSync(vaultPath)
+          val esResync        = new ElasticsearchResync(config, xa)
+          val wikilinkBuilder = new WikilinkBuilder(xa)
+          val obsidianSync    = new ObsidianSync(vaultPath)
 
-        // Schedule periodic tasks
-        timers.startTimerWithFixedDelay(ResyncTimerKey, RunResync, 30.seconds)
-        timers.startTimerWithFixedDelay(GraphTimerKey, RebuildGraph, 5.minutes)
-        timers.startTimerWithFixedDelay(MetricsTimerKey, UpdateMetrics, 15.seconds)
+          // Schedule periodic tasks
+          timers.startTimerWithFixedDelay(ResyncTimerKey, RunResync, 30.seconds)
+          timers.startTimerWithFixedDelay(GraphTimerKey, RebuildGraph, 5.minutes)
+          timers.startTimerWithFixedDelay(MetricsTimerKey, UpdateMetrics, 15.seconds)
 
-        logger.info("ResyncActor started: ES resync every 30s, graph rebuild every 5m, metrics every 15s")
+          logger.info("ResyncActor started: ES resync every 30s, graph rebuild every 5m, metrics every 15s")
 
-        active(esResync, wikilinkBuilder, obsidianSync)
+          active(esResync, wikilinkBuilder, obsidianSync)
+        }
       }
-    }
+    ).onFailure[Exception](SupervisorStrategy.restartWithBackoff(1.second, 30.seconds, 0.2))
   }
 
   private def active(

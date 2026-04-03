@@ -3,6 +3,7 @@ package io.markko.shared.elasticsearch
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
 import com.sksamuel.elastic4s.http.JavaClient
 import com.typesafe.config.Config
+import io.markko.shared.config.ConfigOps
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
@@ -13,8 +14,8 @@ object ElasticsearchSupport {
     val host = config.getString("markko.elasticsearch.host")
     val port = config.getInt("markko.elasticsearch.port")
     val scheme = config.getString("markko.elasticsearch.scheme")
-    val username = optionalString(config, "markko.elasticsearch.username")
-    val password = optionalString(config, "markko.elasticsearch.password")
+    val username = ConfigOps.optionalString(config, "markko.elasticsearch.username")
+    val password = ConfigOps.optionalString(config, "markko.elasticsearch.password")
 
     val props = ElasticProperties(s"$scheme://$host:$port")
 
@@ -33,8 +34,4 @@ object ElasticsearchSupport {
         ElasticClient(JavaClient(props))
     }
   }
-
-  private def optionalString(config: Config, path: String): Option[String] =
-    if (config.hasPath(path)) Option(config.getString(path)).map(_.trim).filter(_.nonEmpty)
-    else None
 }

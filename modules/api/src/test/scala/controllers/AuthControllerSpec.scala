@@ -21,7 +21,7 @@ import play.silhouette.impl.providers.CredentialsProvider
 import repositories.UserRepository
 import services.{RefreshTokenService, TokenBlacklistService, UserService}
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
@@ -35,8 +35,8 @@ class AuthControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
     email = "test@example.com",
     name = "Test User",
     password = Some("$2a$12$hashedpassword"),
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   )
 
   // ---------- Stub UserRepository ----------
@@ -53,8 +53,8 @@ class AuthControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
       nextId += 1
       val created = user.copy(
         id = Some(id),
-        createdAt = Some(LocalDateTime.now()),
-        updatedAt = Some(LocalDateTime.now())
+        createdAt = Some(Instant.now()),
+        updatedAt = Some(Instant.now())
       )
       users = users + (user.email -> created)
       id

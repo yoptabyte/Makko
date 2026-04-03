@@ -10,7 +10,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Synchronizes parsed content to the Obsidian vault as .md files.

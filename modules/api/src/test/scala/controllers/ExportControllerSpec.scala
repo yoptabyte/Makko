@@ -16,7 +16,7 @@ import play.silhouette.impl.authenticators.JWTAuthenticator
 import repositories.{ExportJobRepository, LinkRepository}
 import services.RedisService
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class ExportControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
@@ -35,8 +35,8 @@ class ExportControllerSpec extends PlaySpec with Results with BeforeAndAfterAll 
     email = "test@example.com",
     name = "Test User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   val otherUser: AuthUser = AuthUser(User(
@@ -44,8 +44,8 @@ class ExportControllerSpec extends PlaySpec with Results with BeforeAndAfterAll 
     email = "other@example.com",
     name = "Other User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   class FakeAuthAction(user: AuthUser) extends AuthAction(null, null, null, null, null)(ec) {

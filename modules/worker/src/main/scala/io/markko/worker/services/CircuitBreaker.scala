@@ -1,23 +1,16 @@
 package io.markko.worker.services
 
 import com.typesafe.scalalogging.LazyLogging
-import io.prometheus.client.Counter
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 import scala.util.{Try, Success, Failure}
 
-/**
- * Circuit Breaker for unreliable HTTP calls (fetching external pages).
- *
- * States: Closed → Open → Half-Open → Closed
- * - Closed: normal operation, track failures
- * - Open: all calls fail-fast, wait for reset timeout
- * - Half-Open: allow one probe call, success → Closed, failure → Open
- */
 class CircuitBreaker(
   maxFailures:    Int = 5,
-  resetTimeoutMs: Long = 30000,     // 30 seconds
-  halfOpenMax:    Int = 1
+  resetTimeoutMs: Long = 30000,
+  halfOpenMax:    Int = 1,
+  tripsTotal:     io.prometheus.client.Counter,
+  callsRejected:  io.prometheus.client.Counter
 ) extends LazyLogging {
 
   sealed trait State
@@ -25,35 +18,23 @@ class CircuitBreaker(
   case object Open     extends State
   case object HalfOpen extends State
 
-  @volatile private var state: State = Closed
-  private val failureCount   = new AtomicInteger(0)
-  private val lastFailureAt  = new AtomicLong(0)
+  private val stateRef      = new AtomicReference[State](Closed)
+  private val failureCount  = new AtomicInteger(0)
+  private val lastFailureAt = new AtomicLong(0)
   private val halfOpenProbes = new AtomicInteger(0)
 
-  // Prometheus metrics
-  private val tripsTotal = Counter.build()
-    .name("markko_circuit_breaker_trips_total")
-    .help("Total number of circuit breaker state transitions to Open")
-    .register()
-
-  private val callsRejected = Counter.build()
-    .name("markko_circuit_breaker_rejected_total")
-    .help("Total number of calls rejected by open circuit breaker")
-    .register()
-
-  /**
-   * Execute a block through the circuit breaker.
-   * Returns Success(result) or Failure(exception).
-   */
   def protect[T](block: => T): Try[T] = {
-    state match {
+    stateRef.get() match {
       case Open =>
-        // Check if we should transition to half-open
         if (System.currentTimeMillis() - lastFailureAt.get() > resetTimeoutMs) {
-          logger.info("Circuit breaker transitioning to Half-Open")
-          state = HalfOpen
-          halfOpenProbes.set(0)
-          tryCall(block)
+          if (stateRef.compareAndSet(Open, HalfOpen)) {
+            logger.info("Circuit breaker transitioning to Half-Open")
+            halfOpenProbes.set(0)
+            tryCall(block)
+          } else {
+            callsRejected.inc()
+            Failure(new CircuitBreakerOpenException("Circuit breaker state changed during transition"))
+          }
         } else {
           callsRejected.inc()
           Failure(new CircuitBreakerOpenException(
@@ -87,29 +68,33 @@ class CircuitBreaker(
   }
 
   private def onSuccess(): Unit = {
-    if (state == HalfOpen) {
+    val current = stateRef.get()
+    if (current == HalfOpen) {
       logger.info("Circuit breaker closing (successful probe)")
     }
     failureCount.set(0)
-    state = Closed
+    stateRef.set(Closed)
   }
 
   private def onFailure(ex: Throwable): Unit = {
     val count = failureCount.incrementAndGet()
     lastFailureAt.set(System.currentTimeMillis())
 
-    if (count >= maxFailures && state == Closed) {
-      state = Open
-      tripsTotal.inc()
-      logger.warn(s"Circuit breaker tripped to Open after $count failures: ${ex.getMessage}")
-    } else if (state == HalfOpen) {
-      state = Open
-      tripsTotal.inc()
-      logger.warn(s"Circuit breaker back to Open (probe failed): ${ex.getMessage}")
+    val current = stateRef.get()
+    if (count >= maxFailures && current == Closed) {
+      if (stateRef.compareAndSet(Closed, Open)) {
+        tripsTotal.inc()
+        logger.warn(s"Circuit breaker tripped to Open after $count failures: ${ex.getMessage}")
+      }
+    } else if (current == HalfOpen) {
+      if (stateRef.compareAndSet(HalfOpen, Open)) {
+        tripsTotal.inc()
+        logger.warn(s"Circuit breaker back to Open (probe failed): ${ex.getMessage}")
+      }
     }
   }
 
-  def currentState: State = state
+  def currentState: State = stateRef.get()
   def failures: Int = failureCount.get()
 }
 

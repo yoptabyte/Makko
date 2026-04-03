@@ -15,7 +15,7 @@ import play.api.test._
 import play.silhouette.impl.authenticators.JWTAuthenticator
 import services.{ElasticsearchService, SearchResult}
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
 class SearchControllerSpec extends PlaySpec with Results with BeforeAndAfterAll {
@@ -29,8 +29,8 @@ class SearchControllerSpec extends PlaySpec with Results with BeforeAndAfterAll 
     email = "search@example.com",
     name = "Search User",
     password = None,
-    createdAt = Some(LocalDateTime.now()),
-    updatedAt = Some(LocalDateTime.now())
+    createdAt = Some(Instant.now()),
+    updatedAt = Some(Instant.now())
   ))
 
   class FakeAuthAction(user: AuthUser) extends AuthAction(

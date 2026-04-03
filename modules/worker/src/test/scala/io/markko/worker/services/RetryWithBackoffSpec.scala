@@ -3,15 +3,26 @@ package io.markko.worker.services
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
-import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.{CollectorRegistry, Counter}
 
 import scala.util.Success
 
 class RetryWithBackoffSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
-    // Clear Prometheus registry before each test to avoid conflicts
     CollectorRegistry.defaultRegistry.clear()
+  }
+
+  private def makeCb(maxFailures: Int = 5, resetTimeoutMs: Long = 30000): CircuitBreaker = {
+    val tripsTotal = Counter.build()
+      .name("test_retry_cb_trips_total")
+      .help("Test")
+      .register()
+    val callsRejected = Counter.build()
+      .name("test_retry_cb_rejected_total")
+      .help("Test")
+      .register()
+    new CircuitBreaker(maxFailures = maxFailures, resetTimeoutMs = resetTimeoutMs, tripsTotal = tripsTotal, callsRejected = callsRejected)
   }
 
   "RetryWithBackoff" should "succeed on first attempt without retrying" in {
@@ -56,7 +67,7 @@ class RetryWithBackoffSpec extends AnyFlatSpec with Matchers with BeforeAndAfter
   }
 
   it should "fail fast when circuit breaker is open" in {
-    val cb = new CircuitBreaker(maxFailures = 1, resetTimeoutMs = 60000)
+    val cb = makeCb(maxFailures = 1, resetTimeoutMs = 60000)
     // Trip the breaker
     cb.protect { throw new RuntimeException("trip") }
     cb.currentState shouldBe cb.Open

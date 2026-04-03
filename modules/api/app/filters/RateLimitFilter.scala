@@ -24,7 +24,7 @@ class RateLimitFilter @Inject()(
       next(request)
     } else {
       val key = generateKey(request)
-      val rateLimit = getConfig(request)
+      val rateLimit = getConfigFromKey(key)
 
       rateLimitService.isAllowed(key, rateLimit).unsafeToFuture().flatMap { allowed =>
         if (allowed) {
@@ -67,8 +67,7 @@ class RateLimitFilter @Inject()(
     s"rate-limit:$prefix:$clientIp"
   }
 
-  private def getConfig(request: RequestHeader): RateLimitConfig = {
-    val key = generateKey(request)
+  private def getConfigFromKey(key: String): RateLimitConfig = {
     if (key.startsWith("rate-limit:auth:")) {
       authConfig
     } else if (key.startsWith("rate-limit:search:")) {

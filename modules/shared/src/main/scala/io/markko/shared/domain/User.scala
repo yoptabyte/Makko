@@ -1,21 +1,20 @@
 package io.markko.shared.domain
 
-import java.time.LocalDateTime
+import java.time.Instant
 import io.circe._
 import io.circe.generic.semiauto._
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, OFormat}
 
 case class User(
   id: Option[Long],
   email: String,
   name: String,
   password: Option[String] = None,
-  createdAt: Option[LocalDateTime] = None,
-  updatedAt: Option[LocalDateTime] = None
+  createdAt: Option[Instant] = None,
+  updatedAt: Option[Instant] = None
 )
 
 object User {
-  implicit val format: Format[User] = Json.format[User]
   implicit val encoder: Encoder[User] = deriveEncoder[User]
   implicit val decoder: Decoder[User] = deriveDecoder[User]
 }
@@ -67,12 +66,16 @@ case class RefreshSessionMetadata(
   sessionId: String,
   ipAddress: String,
   userAgent: Option[String],
-  createdAt: LocalDateTime,
-  lastRefreshedAt: Option[LocalDateTime]
+  createdAt: Instant,
+  lastRefreshedAt: Option[Instant]
 )
 
 object RefreshSessionMetadata {
-  implicit val format: Format[RefreshSessionMetadata] = Json.format[RefreshSessionMetadata]
+  implicit val instantReads: play.api.libs.json.Reads[Instant] =
+    play.api.libs.json.Reads.DefaultInstantReads
+  implicit val instantWrites: play.api.libs.json.Writes[Instant] =
+    play.api.libs.json.Writes.DefaultInstantWrites
+  implicit val format: OFormat[RefreshSessionMetadata] = Json.format[RefreshSessionMetadata]
   implicit val encoder: Encoder[RefreshSessionMetadata] = deriveEncoder[RefreshSessionMetadata]
   implicit val decoder: Decoder[RefreshSessionMetadata] = deriveDecoder[RefreshSessionMetadata]
 }
@@ -81,26 +84,31 @@ case class UserResponse(
   id: Long,
   email: String,
   name: String,
-  createdAt: LocalDateTime,
-  updatedAt: LocalDateTime
+  createdAt: Instant,
+  updatedAt: Instant
 )
 
 object UserResponse {
-  implicit val format: Format[UserResponse] = Json.format[UserResponse]
+  implicit val instantReads: play.api.libs.json.Reads[Instant] =
+    play.api.libs.json.Reads.DefaultInstantReads
+  implicit val instantWrites: play.api.libs.json.Writes[Instant] =
+    play.api.libs.json.Writes.DefaultInstantWrites
+  implicit val format: play.api.libs.json.OFormat[UserResponse] = Json.format[UserResponse]
   implicit val encoder: Encoder[UserResponse] = deriveEncoder[UserResponse]
   implicit val decoder: Decoder[UserResponse] = deriveDecoder[UserResponse]
-  
-  def from(user: User): UserResponse = UserResponse(
-    id = user.id.getOrElse(0L),
-    email = user.email,
-    name = user.name,
-    createdAt = user.createdAt.getOrElse(LocalDateTime.now()),
-    updatedAt = user.updatedAt.getOrElse(LocalDateTime.now())
-  )
+
+  def from(user: User): Option[UserResponse] = user.id.map { uid =>
+    UserResponse(
+      id = uid,
+      email = user.email,
+      name = user.name,
+      createdAt = user.createdAt.getOrElse(Instant.now()),
+      updatedAt = user.updatedAt.getOrElse(Instant.now())
+    )
+  }
 }
 
 case class AuthTokenResponse(
-  token: String,
   accessToken: String,
   refreshToken: String,
   tokenType: String,
@@ -109,7 +117,11 @@ case class AuthTokenResponse(
 )
 
 object AuthTokenResponse {
-  implicit val format: Format[AuthTokenResponse] = Json.format[AuthTokenResponse]
+  implicit val instantReads: play.api.libs.json.Reads[Instant] =
+    play.api.libs.json.Reads.DefaultInstantReads
+  implicit val instantWrites: play.api.libs.json.Writes[Instant] =
+    play.api.libs.json.Writes.DefaultInstantWrites
+  implicit val format: play.api.libs.json.OFormat[AuthTokenResponse] = Json.format[AuthTokenResponse]
   implicit val encoder: Encoder[AuthTokenResponse] = deriveEncoder[AuthTokenResponse]
   implicit val decoder: Decoder[AuthTokenResponse] = deriveDecoder[AuthTokenResponse]
 }

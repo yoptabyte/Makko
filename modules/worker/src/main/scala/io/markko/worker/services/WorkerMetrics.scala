@@ -10,6 +10,21 @@ object WorkerMetrics {
 
   // ==================== Parse Pipeline ====================
 
+  val parseJobsStarted: Counter = Counter.build()
+    .name("markko_parse_jobs_started_total")
+    .help("Total parse jobs started")
+    .register()
+
+  val parseJobsCompleted: Counter = Counter.build()
+    .name("markko_parse_jobs_completed_total")
+    .help("Total parse jobs completed successfully")
+    .register()
+
+  val parseJobsFailed: Counter = Counter.build()
+    .name("markko_parse_jobs_failed_total")
+    .help("Total parse jobs failed")
+    .register()
+
   val parseJobsTotal: Counter = Counter.build()
     .name("markko_parse_jobs_total")
     .help("Total parse jobs processed")
@@ -28,6 +43,21 @@ object WorkerMetrics {
     .register()
 
   // ==================== Export Pipeline ====================
+
+  val exportJobsStarted: Counter = Counter.build()
+    .name("markko_export_jobs_started_total")
+    .help("Total export jobs started")
+    .register()
+
+  val exportJobsCompleted: Counter = Counter.build()
+    .name("markko_export_jobs_completed_total")
+    .help("Total export jobs completed successfully")
+    .register()
+
+  val exportJobsFailed: Counter = Counter.build()
+    .name("markko_export_jobs_failed_total")
+    .help("Total export jobs failed")
+    .register()
 
   val exportJobsTotal: Counter = Counter.build()
     .name("markko_export_jobs_total")
